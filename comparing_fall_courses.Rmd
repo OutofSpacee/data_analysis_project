@@ -1,0 +1,921 @@
+---
+title: "comparing_fall_courses"
+output: html_document
+---
+
+This file is meant to compare the course list for Fall 2024 and Fall 2025
+
+*1* Libraries for analysis
+
+```{r Libraries}
+
+library(tidyverse)
+
+```
+
+*2* Loading in required data for analysis.
+
+```{r Load in data}
+
+courses_fall_21 <- read_csv("data/courses_fall_21.csv")
+
+courses_fall_22 <- read_csv("data/courses_fall_22.csv")
+
+courses_fall_23 <- read_csv("data/courses_fall_23.csv")
+
+courses_fall_24 <- read_csv("data/courses_fall_24.csv")
+
+courses_fall_25 <- read_csv("data/courses_fall_25.csv")
+
+```
+
+*3* Checking two different length inquires:
+
+1) Checking if there are the same number of courses between Fall 2024 and Fall 2025 course list.
+
+2) Checking if courses_fall_24 has more courses than courses_fall_25.
+
+```{r Checking lengths}
+
+nrow(courses_fall_21)
+
+nrow(courses_fall_22)
+
+nrow(courses_fall_23)
+
+nrow(courses_fall_24)
+
+nrow(courses_fall_25)
+
+```
+
+*4* Finding number of courses offered in Fall 2024 but not in Fall 2025 AND finding the number of courses offered in Fall 2025 but not in Fall 2024
+
+Fall 2024 offered courses not in Fall 2025: 926
+
+Fall 2025 offered courses not in the Fall 2024 list: 832
+
+Therefore can say: 94 (almost 100) more courses were dropped than courses added for the Fall 2025 semester.
+
+```{r Courses dropped}
+
+#courses included in 24 but not in 25
+#drops
+dropped_courses_25 <- anti_join(courses_fall_24, courses_fall_25, by = c("id", "title"))
+
+#courses included in 25 but not in 24
+#new courses
+added_courses_25 <- anti_join(courses_fall_25, courses_fall_24, by = c("id", "title"))
+
+#courses included in 23 but not in 24
+#drops
+dropped_courses_24 <- anti_join(courses_fall_23, courses_fall_24, by = c("id", "title"))
+
+#courses included in 24 but not in 23
+#new courses
+added_courses_24 <- anti_join(courses_fall_24, courses_fall_23, by = c("id", "title"))
+
+#courses included in 22 but not in 23
+#drops
+dropped_courses_23 <- anti_join(courses_fall_22, courses_fall_23, by = c("id", "title"))
+
+#courses included in 23 but not in 22
+#new courses
+added_courses_23 <- anti_join(courses_fall_23, courses_fall_22, by = c("id", "title"))
+
+#courses included in 21 but not in 22
+#drops
+dropped_courses_22 <- anti_join(courses_fall_21, courses_fall_22, by = c("id", "title"))
+
+#courses included in 22 but not in 21
+#new courses
+added_courses_22 <- anti_join(courses_fall_22, courses_fall_21, by = c("id", "title"))
+
+```
+
+*4.1* Counting Dropped by year
+
+```{r}
+
+nrow(dropped_courses_22)
+nrow(dropped_courses_23)
+nrow(dropped_courses_24)
+nrow(dropped_courses_25)
+
+```
+*4.1.1* Counting Added by year
+
+```{r}
+
+nrow(added_courses_22)
+nrow(added_courses_23)
+nrow(added_courses_24)
+nrow(added_courses_25)
+
+```
+*4.2* Checking work
+
+Conditional statements to check that dropped courses were not offered in Fall 2025 and added courses were not offered in Fall 2024 and vice versa.
+
+```{r}
+
+#Dropped Courses
+
+#conditional statement checking if dropped courses are added to the fall_24 courses no new courses would be added. Ensures that data is correct.
+  #reads True
+nrow(courses_fall_24) == nrow(left_join(courses_fall_24,
+                                        dropped_courses,
+                                        keep = TRUE))
+
+#conditional statement checking the number of courses in courses_fall_25 against the number of courses when "dropped courses" and fall 25 courses were combined. This makes sure that those dropped courses do not exist, and therefore add onto the courses_fall_25 data frame. 
+  #reads True
+nrow(courses_fall_25) != nrow(full_join(courses_fall_25,
+               dropped_courses,
+               by = c("id", "title"),
+               keep = TRUE))
+
+#Added courses
+
+#another conditional statement checking that all added_courses showed up in the fall 25 term and did not add courses. Ensures correct data.
+nrow(courses_fall_25) == nrow(left_join(courses_fall_25, added_courses, keep = TRUE))
+
+#a conditional statement checking that the number of courses for fall 2024 is not equal to a distinct list of courses with courses offered in fall 2025 but not in fall 2024.
+nrow(courses_fall_24) != nrow(full_join(courses_fall_24,
+               added_courses,
+               by = c("id", "title"),
+               keep = TRUE))
+
+```
+*5* Courses dropped/added explicitly related to DEI initiatives
+
+*5.1* 2025
+
+```{r}
+dropped_dei_related_25 <- dropped_courses_25 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+added_dei_related_25 <- added_courses_25 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+```
+
+*5.2.1* Counting
+
+#Dropped: 22
+#Added: 16
+
+lost 6 in total related dei courses
+
+```{r}
+
+nrow(added_dei_related_25) - nrow(dropped_dei_related_25)
+
+```
+
+
+*5.2* 2024
+
+```{r}
+
+dropped_dei_related_24 <- dropped_courses_24 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+added_dei_related_24 <- added_courses_24 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+```
+
+*5.2.1* Counting 
+
+```{r}
+
+nrow(added_dei_related_24)
+nrow(dropped_dei_related_24)
+
+```
+
+
+*5.3* 2023
+
+```{r}
+
+dropped_dei_related_23 <- dropped_courses_23 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+added_dei_related_23 <- added_courses_23 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+```
+
+*5.3.1* Counting for 2023
+
+```{r}
+
+nrow(added_dei_related_23)
+nrow(dropped_dei_related_23)
+
+```
+
+
+*5.4* 2022
+
+```{r}
+
+dropped_dei_related_22 <- dropped_courses_22 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+added_dei_related_22 <- added_courses_22 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+```
+
+*5.3.1* Counting for 2022
+
+```{r}
+
+nrow(added_dei_related_22)
+nrow(dropped_dei_related_22)
+
+```
+
+*6* Total number of courses in Fall 2024/25 explicitly related to dei:
+
+52 explicitly related dei courses in Fall 2024
+
+46 explicitly related dei courses in Fall 2025
+
+again lost 6 explicitly dei related courses: thus, umd will offer six less dei related courses during the Fall 2025 semester compared to the Fall 2024 semester.
+
+```{r}
+#2024
+
+cour_24_dei_related <- courses_fall_24 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+#2025
+cour_25_dei_related <- courses_fall_25 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+#2023
+cour_23_dei_related <- courses_fall_23 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+#2022
+cour_22_dei_related <- courses_fall_22 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+#2021
+cour_21_dei_related <- courses_fall_21 |>
+  mutate(
+    title_lower = str_to_lower(title),
+    description_lower = str_to_lower(description),
+    department_lower = str_to_lower(department),
+    instructors_lower = str_to_lower(instructors)
+  ) |>
+  filter(
+    str_detect(description_lower, "diversity") |
+    str_detect(description_lower, "equity") |
+    str_detect(description_lower, "inclusion") |
+    str_detect(description_lower, "dei") |
+    str_detect(description_lower, "social justice") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, "diversity ") |
+    str_detect(description_lower, "equity ") |
+    str_detect(description_lower, "inclusion ") |
+    str_detect(description_lower, "dei ") |
+    str_detect(description_lower, "social justice ") |
+    str_detect(description_lower, "anti-racism ") |
+    str_detect(description_lower, " diversity ") |
+    str_detect(description_lower, " equity ") |
+    str_detect(description_lower, " inclusion ") |
+    str_detect(description_lower, " dei ") |
+    str_detect(description_lower, " social justice ") |
+    str_detect(description_lower, " anti-racism ") |
+    str_detect(title_lower, "diversity") |
+    str_detect(title_lower, "equity") |
+    str_detect(title_lower, "inclusion") |
+    str_detect(title_lower, "dei") |
+    str_detect(title_lower, "social justice") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, "diversity ") |
+    str_detect(title_lower, "equity ") |
+    str_detect(title_lower, "inclusion ") |
+    str_detect(title_lower, "dei ") |
+    str_detect(title_lower, "social justice ") |
+    str_detect(title_lower, "anti-racism ") |
+    str_detect(title_lower, " diversity ") |
+    str_detect(title_lower, " equity ") |
+    str_detect(title_lower, " inclusion ") |
+    str_detect(title_lower, " dei ") |
+    str_detect(title_lower, " social justice ") |
+    str_detect(title_lower, " anti-racism ")
+  )
+
+```
+
+*6.1* Counting number of DEI courses
+
+```{r}
+
+nrow(cour_21_dei_related)
+nrow(cour_22_dei_related)
+nrow(cour_23_dei_related)
+nrow(cour_24_dei_related)
+nrow(cour_25_dei_related)
+
+
+```
+*ADD A SECTION FOR PERCENT DEI BY YEAR*
+
+*7* Comparing seat numbers for DEI related courses
+
+Mean seats Fall 2024: 39.1
+Mean seats Fall 2025: 26.9
+
+```{r}
+
+cour_21_dei_related |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+cour_22_dei_related |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+cour_23_dei_related |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+cour_24_dei_related |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+cour_25_dei_related |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+```
+
+```{r}
+str_detect(title_lower, "race") |
+    str_detect(description_lower, "race") |
+    str_detect(title_lower, "gender") |
+    str_detect(description_lower, "gender") |
+    str_detect(title_lower, "sexuality") |
+    str_detect(description_lower, "sexuality") |
+    str_detect(title_lower, "disability") |
+    str_detect(description_lower, "disability") |
+    str_detect(title_lower, "environmental justice") |
+    str_detect(description_lower, "environmental justice") |
+    #str_detect(title_lower, "research") |
+    #str_detect(description_lower, "research") |
+    str_detect(title_lower, "minority") |
+    str_detect(description_lower, "minority") |
+    str_detect(title_lower, "first generation") |
+    str_detect(description_lower, "first generation") |
+    str_detect(title_lower, "underrepresented") |
+    str_detect(description_lower, "underrepresented") |
+    str_detect(title_lower, "diverse") |
+    str_detect(description_lower, "diverse") |
+    str_detect(title_lower, "discrimination") |
+    str_detect(description_lower, "discrimination") |
+    str_detect(title_lower, "non-discriminatio") |
+    str_detect(description_lower, "non-discriminatio") |
+    str_detect(title_lower, "lgbtq+") |
+    str_detect(description_lower, "lgbtq+") |
+    str_detect(title_lower, "lgbtq") |
+    str_detect(description_lower, "lgbtq") |
+    str_detect(title_lower, "lesbian") |
+    str_detect(description_lower, "lesbian") |
+    str_detect(title_lower, "gay") |
+    str_detect(description_lower, "gay") |
+    str_detect(title_lower, "trans") |
+    str_detect(description_lower, "trans") |
+    str_detect(title_lower, "transgender") |
+    str_detect(description_lower, "transgender") |
+    str_detect(title_lower, "heterosexual") |
+    str_detect(description_lower, "heterosexual") |
+    str_detect(title_lower, "homosexual") |
+    str_detect(description_lower, "homosexual")
+```
+
