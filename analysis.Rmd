@@ -1,0 +1,210 @@
+---
+title: "analysis"
+author: "Theo Rose"
+date: "2025-05-16"
+output: html_document
+---
+
+```{r}
+
+library(tidyverse)
+
+```
+
+```{r}
+
+merged_21_to_25_courses_analyzed <- read_csv("data/merged_21_to_25_courses_analyzed.csv")
+
+```
+
+```{r Getting 10s from ai scores}
+
+most_likely_threatened_courses <- merged_21_to_25_courses_analyzed |>
+  filter(dei_score_score > 9 | race_score_score > 9 | gender_score_score > 9  | sexuality_score_score > 9 | dei_score_score > 8 | race_score_score > 8 | gender_score_score > 8  | sexuality_score_score > 8)
+
+```
+
+```{r Looking at most likely}
+
+
+
+```
+
+Question *1* Are the number of DEI related classes decreasing 
+
+Step 1 determine the number of just DEI courses over the years
+
+*Findings: 2025 will have the lowest number of DEI courses at 216. Between 2024 and 2025 the number dropped over six percent, the highest percent drop in the last five years.*
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(dei_score_score >= 8) |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  ) |>
+  arrange(term)
+
+```
+
+Step 2: determine the number of DEI *related* courses over the years. 
+
+*Findings: 2025 will see the lowest number of DEI related courses in the last 5 years at 226. Between 2024 and 2025 the number of DEI related courses droped over five percent, the second stepest drop since last year.*
+
+```{r}
+
+#since the data frame already filters for DEI related by the ai's score, this is enough for determining the number of DEI related courses.
+
+most_likely_threatened_courses |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  )
+
+```
+
+Question *2* Are the seat counts for DEI related classes decreasing?
+
+Step 1: looking just at DEI courses not DEI related
+
+*Findings: 2025 will have the lowest mean number of seats at just under 30, a drop of over 27 percent since the fall 2024 semester.
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(dei_score_score >= 8) |>
+  group_by(term) |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+```
+
+Step 2: Looking at DEI related courses
+
+*Findings: 2025 will again have the lowest mean seat count at just under 30, with a very similar percentage drop of 27 percent since the fall 2024 semester. The drop was even more significant looking farther back as since 2021 the mean number of seats dropped more than 30 percent.*
+
+```{r}
+
+most_likely_threatened_courses |>
+  group_by(term) |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+```
+
+Question *3* Are the number of DEI courses offered in non-humanities departments decreasing?
+
+Step 1: Need to code whether or not a department is a humanity or not.
+
+```{r}
+
+classed_departments <- read_csv("data/CLASSIFIER.csv")
+
+#join on department
+merged_21_to_25_courses_analyzed <- merged_21_to_25_courses_analyzed |>left_join(classed_departments, by = "department")
+
+#rerun this part to update
+most_likely_threatened_courses <- merged_21_to_25_courses_analyzed |>
+  filter(dei_score_score > 9 | race_score_score > 9 | gender_score_score > 9  | sexuality_score_score > 9 | dei_score_score > 8 | race_score_score > 8 | gender_score_score > 8  | sexuality_score_score > 8)
+
+```
+
+Step 2: Filter for DEI courses and group by whether it is a non-humanity
+
+*Findings: 2025 will be see the lowest number of DEI explicit courses at the university in non-humanity major. The number dropped 20% after last fall semester, the steepest drop in the last 5 years. *
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(dei_score_score >= 8 & humanity == "FALSE") |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  )
+
+```
+
+Step 3: Filter for DEI related courses and group by whether it is a non-humanity
+
+*Findings same as the other one but a little less % change. A 15% change instead. *
+
+```{r}
+
+
+most_likely_threatened_courses |>
+  filter(humanity == "FALSE") |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  )
+
+
+```
+
+Question *4* Are the number of DEI courses offered at humanity departments decreasing?
+
+Step 1: Filter for DEI courses and group by whether it is a humanity
+
+*Findings: 2025 will have the lowest number of DEI courses in humanity departments. The number dropped 6 percent in the last year to 187 DEI courses in humanities departments, and an over 2 percent drop since 2021.*
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(dei_score_score >= 8 & humanity == "TRUE") |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  )
+
+```
+
+Step 2: Filter for DEI related courses and group by whether it is a humanity.
+
+*Findings: 2025 will have the lowest number of DEI related courses in humanities departments. The number dropped over 5 percent since the last fall semester and is the fist time the number of DEI related courses in the humanities department dropped below 200.
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(humanity == "TRUE") |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  )
+
+```
+
+Question *5* Looking at seat counts
+
+To do this I decided to look at related to DEI and not just DEI by itself since it is more likely that the search terms the administration will do will be broader than we think.
+
+*Findings: The mean number of seats for DEI related courses dropped by more than 11 since between the fall 2024 and 2025 semesters. The drop was almost 30 percent in the last year and an over 26 percent drop since 2021.*
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(humanity == "TRUE") |>
+  group_by(term) |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+```
+
+Doing it for non-humanities departments
+
+*Findings: Drop there was only a single mean seat lost between the 2024 and 2025 fall semesters. But comparing the 2021 and 2025 fall semesters, there was over a 50 percent drop in the mean number of seats for DEI related courses in STEM related departments.*
+
+```{r}
+
+most_likely_threatened_courses |>
+  filter(humanity == "FALSE") |>
+  group_by(term) |>
+  summarise(
+    mean_seats = mean(seats)
+  )
+
+```
+

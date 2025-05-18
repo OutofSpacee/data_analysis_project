@@ -1,0 +1,44 @@
+---
+title: "joiner"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Loading libs}
+
+library(tidyverse)
+
+```
+
+```{r}
+
+courses_fall_21 <- read_csv("data/courses_fall_21.csv")
+courses_fall_22 <- read_csv("data/courses_fall_22.csv")
+courses_fall_23 <- read_csv("data/courses_fall_23.csv")
+courses_fall_24 <- read_csv("data/courses_fall_24.csv")
+courses_fall_25 <- read_csv("data/courses_fall_25.csv")
+
+```
+
+```{r Listing}
+
+# Putting all frames in one list
+fall_courses_21_to_25_list <- list(courses_fall_21, courses_fall_22, courses_fall_23, courses_fall_24, courses_fall_25)
+
+```
+
+```{r Mergining}
+
+merged_21_to_25_courses <- reduce(fall_courses_21_to_25_list, full_join)
+
+```
+
+```{r Writing}
+
+write_csv(merged_21_to_25_courses, "data/merged_21_to_25_courses.csv")
+
+```
+
