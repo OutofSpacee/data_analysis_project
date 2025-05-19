@@ -24,11 +24,6 @@ most_likely_threatened_courses <- merged_21_to_25_courses_analyzed |>
 
 ```
 
-```{r Looking at most likely}
-
-
-
-```
 
 Question *1* Are the number of DEI related classes decreasing 
 
@@ -63,6 +58,23 @@ most_likely_threatened_courses |>
   )
 
 ```
+
+*Side Note*
+
+The number of courses offered at this university count:
+
+21(4545), 22(4975), 23(4849), 24(4705), 25(4611)
+
+```{r}
+
+merged_21_to_25_courses_analyzed |>
+  group_by(term) |>
+  summarise(
+    count = n()
+  )
+
+```
+
 
 Question *2* Are the seat counts for DEI related classes decreasing?
 
